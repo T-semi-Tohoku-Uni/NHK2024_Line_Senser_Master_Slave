@@ -1,0 +1,2 @@
+filter.c:3:24:moving_average_filter_init	2
+filter.c:16:8:moving_average_filter_update	3
