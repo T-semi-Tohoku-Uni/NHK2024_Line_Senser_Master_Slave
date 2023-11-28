@@ -24,6 +24,7 @@
 #include "filter.h"
 #include "R2CANIDList.h"
 #include <string.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,6 +47,8 @@ FDCAN_HandleTypeDef hfdcan1;
 
 SPI_HandleTypeDef hspi1;
 
+UART_HandleTypeDef huart2;
+
 /* USER CODE BEGIN PV */
 unsigned char txBuf[2] = {0b01111000, 0x00}; // 痩身用のバッファ
 unsigned char rxBuf[2]; // 受診用のバッファ
@@ -56,6 +59,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_FDCAN1_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 /*
  * アナログ・デジタル変換器からSPI通信でデータを読み込む
@@ -103,6 +107,7 @@ GPIO_TypeDef* sensorPort[8] = {
 	};
 
 void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteList, unsigned int* sensorBlackList) {
+<<<<<<< Updated upstream
 	// センサ0からセンサ7までのNCCのリスト
 //	uint16_t sensorList[8] = {
 //			Sensor1_Pin,
@@ -125,6 +130,8 @@ void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteL
 //			Sensor8_GPIO_Port
 //	};
 
+=======
+>>>>>>> Stashed changes
 	// センサの値を格納する
 	double filterdSensorVal[8];
 
@@ -148,6 +155,7 @@ void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteL
 		filterdSensorVal[pin] = moving_average_filter_update(bufList[pin], (double) scaledSensorVal);
 
 		// デバッグ用の出力を書くところ
+		printf("original sensor%d: %f", pin+1, filterdSensorVal[pin]);
 	}
 
 	// 横ずれを中央４つのセンサを使って検出する
@@ -209,6 +217,12 @@ void SendMessageOnCAN(uint32_t Identifier, uint32_t DataLength, uint8_t TxData[3
 
 	return;
 }
+
+int _write(int file, char *ptr, int len)
+{
+  HAL_UART_Transmit(&huart2,(uint8_t *)ptr,len,10);
+  return len;
+}
 /* USER CODE END 0 */
 
 /**
@@ -218,7 +232,7 @@ void SendMessageOnCAN(uint32_t Identifier, uint32_t DataLength, uint8_t TxData[3
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	setbuf(stdout, NULL); // printfの有効化
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -241,6 +255,7 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_FDCAN1_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   /*センサの個体差を吸収するため, 初期値を取得する. 後で実装する*/
   /*白*/
@@ -422,6 +437,54 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart2, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart2, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -437,38 +500,27 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, Sensor8_Pin|Sensor7_Pin|Sensor1_Pin|Sensor6_Pin
-                          |Sensor5_Pin|Sensor4_Pin|Sensor3_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOA, Sensor4_Pin|Sensor3_Pin|Sensor2_Pin|Sensor1_Pin
+                          |Sensor5_Pin|Sensor6_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(Sensor2_GPIO_Port, Sensor2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, Sensor7_Pin|Sensor8_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pins : Sensor8_Pin Sensor7_Pin Sensor1_Pin Sensor6_Pin
-                           Sensor5_Pin Sensor4_Pin Sensor3_Pin Sensor2_Pin */
-  GPIO_InitStruct.Pin = Sensor8_Pin|Sensor7_Pin|Sensor1_Pin|Sensor6_Pin
-                          |Sensor5_Pin|Sensor4_Pin|Sensor3_Pin|Sensor2_Pin;
+  /*Configure GPIO pins : Sensor4_Pin Sensor3_Pin Sensor2_Pin Sensor1_Pin
+                           Sensor5_Pin Sensor6_Pin */
+  GPIO_InitStruct.Pin = Sensor4_Pin|Sensor3_Pin|Sensor2_Pin|Sensor1_Pin
+                          |Sensor5_Pin|Sensor6_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA9 PA10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pins : Sensor7_Pin Sensor8_Pin */
+  GPIO_InitStruct.Pin = Sensor7_Pin|Sensor8_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
