@@ -107,32 +107,6 @@ GPIO_TypeDef* sensorPort[8] = {
 	};
 
 void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteList, unsigned int* sensorBlackList) {
-<<<<<<< Updated upstream
-	// センサ0からセンサ7までのNCCのリスト
-//	uint16_t sensorList[8] = {
-//			Sensor1_Pin,
-//			Sensor2_Pin,
-//			Sensor3_Pin,
-//			Sensor4_Pin,
-//			Sensor5_Pin,
-//			Sensor6_Pin,
-//			Sensor7_Pin,
-//			Sensor8_Pin
-//	};
-//	GPIO_TypeDef* sensorPort[8] = {
-//			Sensor1_GPIO_Port,
-//			Sensor2_GPIO_Port,
-//			Sensor3_GPIO_Port,
-//			Sensor4_GPIO_Port,
-//			Sensor5_GPIO_Port,
-//			Sensor6_GPIO_Port,
-//			Sensor7_GPIO_Port,
-//			Sensor8_GPIO_Port
-//	};
-
-=======
->>>>>>> Stashed changes
-	// センサの値を格納する
 	double filterdSensorVal[8];
 
 	for(int pin = 0; pin < 8; pin++ ) {
