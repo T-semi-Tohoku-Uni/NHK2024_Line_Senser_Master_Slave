@@ -57,28 +57,22 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define Sensor8_Pin GPIO_PIN_0
-#define Sensor8_GPIO_Port GPIOA
-#define Sensor7_Pin GPIO_PIN_1
-#define Sensor7_GPIO_Port GPIOA
-#define Sensor1_Pin GPIO_PIN_2
-#define Sensor1_GPIO_Port GPIOA
-#define Sensor6_Pin GPIO_PIN_3
-#define Sensor6_GPIO_Port GPIOA
-#define Sensor5_Pin GPIO_PIN_4
-#define Sensor5_GPIO_Port GPIOA
 #define Sensor4_Pin GPIO_PIN_5
 #define Sensor4_GPIO_Port GPIOA
 #define Sensor3_Pin GPIO_PIN_6
 #define Sensor3_GPIO_Port GPIOA
 #define Sensor2_Pin GPIO_PIN_7
 #define Sensor2_GPIO_Port GPIOA
-#define T_SWDIO_Pin GPIO_PIN_13
-#define T_SWDIO_GPIO_Port GPIOA
-#define T_SWCLK_Pin GPIO_PIN_14
-#define T_SWCLK_GPIO_Port GPIOA
-#define LD2_Pin GPIO_PIN_8
-#define LD2_GPIO_Port GPIOB
+#define Sensor7_Pin GPIO_PIN_0
+#define Sensor7_GPIO_Port GPIOB
+#define Sensor1_Pin GPIO_PIN_8
+#define Sensor1_GPIO_Port GPIOA
+#define Sensor5_Pin GPIO_PIN_9
+#define Sensor5_GPIO_Port GPIOA
+#define Sensor6_Pin GPIO_PIN_10
+#define Sensor6_GPIO_Port GPIOA
+#define Sensor8_Pin GPIO_PIN_6
+#define Sensor8_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

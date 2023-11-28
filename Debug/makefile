@@ -63,7 +63,7 @@ main-build: NHK2024_Line_Senser_Master_Slave.elf secondary-outputs
 
 # Tool invocations
 NHK2024_Line_Senser_Master_Slave.elf NHK2024_Line_Senser_Master_Slave.map: $(OBJS) $(USER_OBJS) /Users/shibatakeigo/Development/t-semi/NHK2024_Line_Senser_Master_Slave/STM32G431KBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "NHK2024_Line_Senser_Master_Slave.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/shibatakeigo/Development/t-semi/NHK2024_Line_Senser_Master_Slave/STM32G431KBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="NHK2024_Line_Senser_Master_Slave.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "NHK2024_Line_Senser_Master_Slave.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/shibatakeigo/Development/t-semi/NHK2024_Line_Senser_Master_Slave/STM32G431KBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="NHK2024_Line_Senser_Master_Slave.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
