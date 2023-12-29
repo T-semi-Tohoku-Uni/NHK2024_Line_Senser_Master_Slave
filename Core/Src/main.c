@@ -79,7 +79,7 @@ void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteL
  * @oaram DataLength データ長
  * @param TxData 送るデータ
  */
-void SendMessageOnCAN(uint32_t Identifier, uint32_t DataLength, uint8_t* TxData);
+void SendMessageOnCAN(uint32_t Identifier, uint32_t DataLength, uint8_t TxData[3]);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
