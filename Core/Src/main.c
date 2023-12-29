@@ -112,7 +112,7 @@ void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteL
 	for(int pin = 0; pin < 8; pin++ ) {
 		HAL_GPIO_WritePin(sensorPort[pin], sensorList[pin], GPIO_PIN_RESET); // 通信するスレーブを選択する
 		HAL_SPI_TransmitReceive(&hspi1, txBuf, rxBuf, 2, HAL_MAX_DELAY); // SPI通信
-		HAL_GPIO_WritePin(sensorPort[pin], sensorList[pin], GPIO_PIN_RESET); // スレーブの選択を解除する
+		HAL_GPIO_WritePin(sensorPort[pin], sensorList[pin], GPIO_PIN_SET); // スレーブの選択を解除する
 
 		unsigned int sensorVal = ((rxBuf[0] & 0x03) << 8) + rxBuf[1]; // デジタル値のセンサの値を取得する（10bit）
 		// 初めに取得した白(3.3V)と黒(0V)の値を使ってセンサの値をスケールする
