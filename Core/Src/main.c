@@ -129,7 +129,7 @@ void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteL
 		filterdSensorVal[pin] = moving_average_filter_update(bufList[pin], (double) scaledSensorVal);
 
 		// デバッグ用の出力を書くところ
-		printf("original sensor%d: %f", pin+1, filterdSensorVal[pin]);
+		printf("original sensor%d: %f\r\n", pin+1, filterdSensorVal[pin]);
 	}
 
 	// 横ずれを中央４つのセンサを使って検出する
@@ -158,13 +158,13 @@ void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteL
 	// 横ずれ
 	uint8_t horizontalOffsetTxData[4];
 	memcpy(horizontalOffsetTxData, &horizontalOffset, sizeof(float));
-	SendMessageOnCAN(0x00, FDCAN_DLC_BYTES_4, horizontalOffsetTxData);
+	//SendMessageOnCAN(0x00, FDCAN_DLC_BYTES_4, horizontalOffsetTxData);
 
 	// 水平ライン検出
 	uint8_t verticalLineDetectorTxData[1] = { // 意味はないけど, 今後のバグ防止
 			verticalLineDetector
 	};
-	SendMessageOnCAN(0x01, FDCAN_DLC_BYTES_1, verticalLineDetectorTxData);
+	//SendMessageOnCAN(0x01, FDCAN_DLC_BYTES_1, verticalLineDetectorTxData);
 	return;
 }
 
@@ -274,6 +274,7 @@ int main(void)
   while (1)
   {
 	ReadADCCChannel(bufList, sensorWhiteList, sensorBlackList);
+	HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
