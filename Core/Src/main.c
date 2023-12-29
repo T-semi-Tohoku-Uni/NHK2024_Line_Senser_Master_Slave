@@ -62,22 +62,22 @@ static void MX_FDCAN1_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 /*
- * アナログ・デジタル変換器からSPI通信でデータを読み込む
+ * アナログ・�?ジタル変換器からSPI通信で�?ータを読み込�?
  *
- * @param bufList それぞれのセンサのバッファを配列にしたもの
- * @param sensorWhiteList それぞれのセンサの白（初期化時に設定される値）
- * @oaram sensorBlackList それぞれのセンサの黒（初期化時に設定される値）
+ * @param bufList それぞれのセンサのバッファを�?��?�にしたも�?�
+ * @param sensorWhiteList それぞれのセンサの白?���?�期化時に設定される値?�?
+ * @oaram sensorBlackList それぞれのセンサの黒（�?�期化時に設定される値?�?
  *
  * @return void
 */
 void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteList, unsigned int* sensorBlackList);
 
 /*
- * CAN通信で上位のマイコンにデータを送る関数
+ * CAN通信で上位�?�マイコンに�?ータを�?�る関数
  *
  * @param Identifier CANID
- * @oaram DataLength データ長
- * @param TxData 送るデータ
+ * @oaram DataLength �?ータ長
+ * @param TxData 送る�?ータ
  */
 void SendMessageOnCAN(uint32_t Identifier, uint32_t DataLength, uint8_t TxData[3]);
 /* USER CODE END PFP */
@@ -110,12 +110,12 @@ void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteL
 	double filterdSensorVal[8];
 
 	for(int pin = 0; pin < 8; pin++ ) {
-		HAL_GPIO_WritePin(sensorPort[pin], sensorList[pin], GPIO_PIN_RESET); // 通信するスレーブを選択する
+		HAL_GPIO_WritePin(sensorPort[pin], sensorList[pin], GPIO_PIN_SET); // 通信するスレーブを選択す�?
 		HAL_SPI_TransmitReceive(&hspi1, txBuf, rxBuf, 2, HAL_MAX_DELAY); // SPI通信
-		HAL_GPIO_WritePin(sensorPort[pin], sensorList[pin], GPIO_PIN_SET); // スレーブの選択を解除する
+		HAL_GPIO_WritePin(sensorPort[pin], sensorList[pin], GPIO_PIN_RESET); // スレーブ�?�選択を解除する
 
-		unsigned int sensorVal = ((rxBuf[0] & 0x03) << 8) + rxBuf[1]; // デジタル値のセンサの値を取得する（10bit）
-		// 初めに取得した白(3.3V)と黒(0V)の値を使ってセンサの値をスケールする
+		unsigned int sensorVal = ((rxBuf[0] & 0x03) << 8) + rxBuf[1]; // �?ジタル値のセンサの値を取得する�?10bit?�?
+		// 初めに取得した白(3.3V)と�?(0V)の値を使ってセンサの値をスケールする
 		double scaledSensorVal;
 		if (sensorVal >= sensorWhiteList[pin]) {
 			scaledSensorVal = sensorWhiteList[pin];
@@ -125,43 +125,43 @@ void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteL
 			scaledSensorVal = (sensorVal - sensorBlackList[pin]) * 1024 / (sensorWhiteList[pin] - sensorBlackList[pin]);
 		}
 
-		// ローバスフィルタを適応する
+		// ローバスフィルタを適応す�?
 		filterdSensorVal[pin] = moving_average_filter_update(bufList[pin], (double) scaledSensorVal);
 
-		// デバッグ用の出力を書くところ
+		// �?バッグ用の出力を書くところ
 		printf("original sensor%d: %f\r\n", pin+1, filterdSensorVal[pin]);
 	}
 
-	// 横ずれを中央４つのセンサを使って検出する
+	// 横ずれを中央?��つのセンサを使って検�?�する
 	/*
-	 * diff = (右の二つのセンサの値の和) - (左の二つのセンサの値の和)
-	 * if diff > 0 then ロボットがラインに対して右にずれている
-	 * if diff < 0 then ロボットがラインに対して左にずれている
+	 * diff = (右の二つのセンサの値の�?) - (左の二つのセンサの値の�?)
+	 * if diff > 0 then ロボットがラインに対して右にずれて�?�?
+	 * if diff < 0 then ロボットがラインに対して左にずれて�?�?
 	 *
 	 */
 	float horizontalOffset = (filterdSensorVal[2 - 1] + filterdSensorVal[6 - 1]) - (filterdSensorVal[3 - 1] + filterdSensorVal[7 - 1]);
 
-	// 角度のずれを中央4つのセンサを使って検出する
+	// 角度のずれを中央4つのセンサを使って検�?�する
 	/*
-	 *　いいやり方が見つからない
+	 *�?�?�?�?り方が見つからな�?
 	 * */
 
-	// 水平ライン検出
+	// 水平ライン検�?�
 	/*
-	 * 上の4つのセンサと下の四つのセンサを使って水平ラインを検出する
-	 * 多分, 8つのセンサのうちそれぞれの側（左右）で一つづつセンサが反応すればOKかな
-	 * 後で実装する
+	 * 上�?�4つのセンサと下�?�四つのセンサを使って水平ラインを検�?�する
+	 * 多�?, 8つのセンサの�?ちそれぞれの側?��左右?��で�?つづつセンサが反応すれ�?�OKかな
+	 * 後で実�?する
 	 */
 	uint8_t verticalLineDetector = 0;
 
-	// CAN通信で上位の基盤に送る
+	// CAN通信で上位�?�基盤に送る
 	// 横ずれ
 	uint8_t horizontalOffsetTxData[4];
 	memcpy(horizontalOffsetTxData, &horizontalOffset, sizeof(float));
 	//SendMessageOnCAN(0x00, FDCAN_DLC_BYTES_4, horizontalOffsetTxData);
 
-	// 水平ライン検出
-	uint8_t verticalLineDetectorTxData[1] = { // 意味はないけど, 今後のバグ防止
+	// 水平ライン検�?�
+	uint8_t verticalLineDetectorTxData[1] = { // 意味はな�?けど, 今後�?�バグ防止
 			verticalLineDetector
 	};
 	//SendMessageOnCAN(0x01, FDCAN_DLC_BYTES_1, verticalLineDetectorTxData);
@@ -173,7 +173,7 @@ void SendMessageOnCAN(uint32_t Identifier, uint32_t DataLength, uint8_t TxData[3
 //	HAL_StatusTypeDef HAL_ret;
 	TxHeader.Identifier = Identifier;                 // ID
 	TxHeader.IdType = FDCAN_STANDARD_ID;         // 標準ID
-	TxHeader.TxFrameType = FDCAN_DATA_FRAME;     // データフレーム
+	TxHeader.TxFrameType = FDCAN_DATA_FRAME;     // �?ータフレー�?
 	TxHeader.DataLength = DataLength;     // 3バイトデータ
 	TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
 	TxHeader.BitRateSwitch = FDCAN_BRS_OFF;
@@ -185,7 +185,7 @@ void SendMessageOnCAN(uint32_t Identifier, uint32_t DataLength, uint8_t TxData[3
 			Error_Handler();
 	}
 
-	// FDCANメッセージの送信
+	// FDCANメ�?セージの送信
 //	HAL_ret = HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
 	HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
 
@@ -206,7 +206,7 @@ int _write(int file, char *ptr, int len)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	setbuf(stdout, NULL); // printfの有効化
+	setbuf(stdout, NULL); // printfの有効�?
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -231,7 +231,7 @@ int main(void)
   MX_FDCAN1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  /*センサの個体差を吸収するため, 初期値を取得する. 後で実装する*/
+  /*センサの個体差を吸収するた�?, 初期値を取得す�?. 後で実�?する*/
   /*白*/
   unsigned int sensorWhiteList[8] = {
 		  1024, // センサ1
@@ -243,7 +243,7 @@ int main(void)
 		  1024, // センサ7
 		  1024  // センサ8
   };
-  /*黒*/
+  /*�?*/
   unsigned int sensorBlackList[8] = {
 		  0, // センサ1
 		  0, // センサ2
@@ -255,8 +255,8 @@ int main(void)
 		  0  // センサ8
   };
 
-  /*それぞれのセンサのバッファを初期化*
-   *初めに読み取った値で初期化するのが良さそう*/
+  /*それぞれのセンサのバッファを�?�期�?*
+   *初めに読み取った�?�で初期化する�?�が良さそ�?*/
   NHK2024_Filter_Buffer* bufList[8] = {
 		  moving_average_filter_init(0.0, 10), // センサ1
 		  moving_average_filter_init(0.0, 10), // センサ2
@@ -293,7 +293,7 @@ void SystemClock_Config(void)
 
   /** Configure the main internal regulator output voltage
   */
-  HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1_BOOST);
+  HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -303,8 +303,8 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV4;
-  RCC_OscInitStruct.PLL.PLLN = 85;
+  RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
+  RCC_OscInitStruct.PLL.PLLN = 10;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
@@ -322,7 +322,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -394,7 +394,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
   hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
