@@ -47,6 +47,8 @@ FDCAN_HandleTypeDef hfdcan1;
 
 SPI_HandleTypeDef hspi1;
 
+TIM_HandleTypeDef htim6;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -60,6 +62,7 @@ static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_FDCAN1_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 /*
  * アナログ・�?ジタル変換器からSPI通信で�?ータを読み込�?
@@ -70,7 +73,7 @@ static void MX_USART2_UART_Init(void);
  *
  * @return void
 */
-void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteList, unsigned int* sensorBlackList);
+void ReadADCCChannel();
 
 /*
  * CAN通信で上位�?�マイコンに�?ータを�?�る関数
@@ -106,7 +109,55 @@ GPIO_TypeDef* sensorPort[8] = {
 		Sensor8_GPIO_Port
 	};
 
-void ReadADCCChannel(NHK2024_Filter_Buffer **bufList, unsigned int* sensorWhiteList, unsigned int* sensorBlackList) {
+/*
+ * sampling value of sensor
+ * Get this value before start
+ */
+unsigned int *sensorWhiteList = NULL;
+unsigned int *sensorBlackList = NULL;
+
+//unsigned int sensorWhiteList[8] = {
+//		  1024, // センサ1
+//		  1024, // センサ2
+//		  1024, // センサ3
+//		  1024, // センサ4
+//		  1024, // センサ5
+//		  1024, // センサ6
+//		  1024, // センサ7
+//		  1024  // センサ8
+//};
+///*�?*/
+//unsigned int sensorBlackList[8] = {
+//		  0, // センサ1
+//		  0, // センサ2
+//		  0, // センサ3
+//		  0, // センサ4
+//		  0, // センサ5
+//		  0, // センサ6
+//		  0, // センサ7
+//		  0  // センサ8
+//};
+
+
+void ReadADCCChannel() {
+	// 初期化
+	static int isInitialized = 0;
+	static NHK2024_Filter_Buffer* bufList[8];
+	if (!isInitialized) {
+		// Initialize buffer
+		for (int sensor = 0; sensor < 8; sensor++ ) {
+			bufList[sensor] = moving_average_filter_init(0.0, 10);
+		}
+
+		// Check if sensorXXXList is initialized
+		if (sensorWhiteList == NULL || sensorBlackList == NULL) {
+			Error_Handler();
+		}
+
+		// Do not delete following statement !!!
+		isInitialized = 1;
+	}
+
 	double filterdSensorVal[8];
 
 	for(int pin = 0; pin < 8; pin++ ) {
@@ -185,11 +236,15 @@ void SendMessageOnCAN(uint32_t Identifier, uint32_t DataLength, uint8_t* TxData)
 			Error_Handler();
 	}
 
-	// FDCANメ�?セージの送信
-//	HAL_ret = HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
-//	HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
-
 	return;
+}
+
+// Timer interrupt handler
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim == &htim6){
+        ReadADCCChannel();
+    }
 }
 
 int _write(int file, char *ptr, int len)
@@ -230,51 +285,26 @@ int main(void)
   MX_SPI1_Init();
   MX_FDCAN1_Init();
   MX_USART2_UART_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
-  /*センサの個体差を吸収するた�?, 初期値を取得す�?. 後で実�?する*/
-  /*白*/
-  unsigned int sensorWhiteList[8] = {
-		  1024, // センサ1
-		  1024, // センサ2
-		  1024, // センサ3
-		  1024, // センサ4
-		  1024, // センサ5
-		  1024, // センサ6
-		  1024, // センサ7
-		  1024  // センサ8
-  };
-  /*�?*/
-  unsigned int sensorBlackList[8] = {
-		  0, // センサ1
-		  0, // センサ2
-		  0, // センサ3
-		  0, // センサ4
-		  0, // センサ5
-		  0, // センサ6
-		  0, // センサ7
-		  0  // センサ8
-  };
+  // To do: Initialize sensorXXXList
 
-  /*それぞれのセンサのバッファを�?�期�?*
-   *初めに読み取った�?�で初期化する�?�が良さそ�?*/
-  NHK2024_Filter_Buffer* bufList[8] = {
-		  moving_average_filter_init(0.0, 10), // センサ1
-		  moving_average_filter_init(0.0, 10), // センサ2
-		  moving_average_filter_init(0.0, 10), // センサ3
-		  moving_average_filter_init(0.0, 10), // センサ4
-		  moving_average_filter_init(0.0, 10), // センサ5
-		  moving_average_filter_init(0.0, 10), // センサ6
-		  moving_average_filter_init(0.0, 10), // センサ7
-		  moving_average_filter_init(0.0, 10)  // センサ8
-  };
+  /*
+   * Start Timer
+   * TImer Settings are
+   * Base clock   : 80MHz
+   * Prescaler    : 80 * 10 ^ 3
+   * CounterPriod : 100
+   * So, interrupt range are 0.1s
+   */
+  HAL_TIM_Base_Start_IT(&htim6);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	ReadADCCChannel(bufList, sensorWhiteList, sensorBlackList);
-	HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -408,6 +438,44 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief TIM6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM6_Init(void)
+{
+
+  /* USER CODE BEGIN TIM6_Init 0 */
+
+  /* USER CODE END TIM6_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM6_Init 1 */
+
+  /* USER CODE END TIM6_Init 1 */
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 8000;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 100;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM6_Init 2 */
+
+  /* USER CODE END TIM6_Init 2 */
 
 }
 
